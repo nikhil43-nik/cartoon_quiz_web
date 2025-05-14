@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TOON ADDA - Cartoon Quiz</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Comic Sans MS', cursive;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background: linear-gradient(135deg,  lightseagreen, #ffcc70);
+      color: #333;
+      text-align: center;
+      padding: 2rem;
+      overflow-x: hidden;
+    }
+    h1 {
+      font-family: 'Press Start 2P', cursive;
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      color: yellow;
+      text-shadow: 2px 2px black;
+    }
+    .level-buttons button {
+      background: #fff200;
+      padding: 1rem 2rem;
+      margin: 1rem;
+      font-size: 1.2rem;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: 0.3s;
+      box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+    }
+    .level-buttons button:hover {
+      transform: scale(1.1);
+    }
+    #quiz-container {
+      display: none;
+      margin-top: 2rem;
+      background: #fff;
+      padding: 2rem;
+      border-radius: 20px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+      animation: fadeIn 1s ease-in-out;
+    }
+    .question {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    .options button {
+      display: block;
+      width: 80%;
+      margin: 1rem auto;
+      padding: 1rem;
+      border-radius: 10px;
+      border: none;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      animation: pop 0.3s ease forwards;
+    }
+    .timer {
+      font-size: 1.2rem;
+      margin-top: 1rem;
+    }
+    .correct {
+      background: linear-gradient(to right, #b8ffb8, #b0f0d9);
+    }
+    .wrong {
+      background: linear-gradient(to right, #ffc1c1, #ff9b9b);
+    }
+    @keyframes fadeIn {
+      from {opacity: 0; transform: translateY(-20px);}
+      to {opacity: 1; transform: translateY(0);}
+    }
+    @keyframes pop {
+      from {transform: scale(0.9); opacity: 0.8;}
+      to {transform: scale(1); opacity: 1;}
+    }
+    #popup {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      border-radius: 20px;
+      padding: 2rem;
+      box-shadow: 0 20px 30px rgba(0,0,0,0.3);
+      z-index: 1000;
+      animation: fadeIn 0.5s ease-in-out;
+    }
+    #popup button {
+      margin-top: 1rem;
+      background: #ffcc00;
+      padding: 1rem 2rem;
+      border: none;
+      border-radius: 10px;
+      font-size: 1.2rem;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>TOON ADDA</h1>
+  <div class="level-buttons">
+    <button onclick="startQuiz('easy')">Easy</button>
+    <button onclick="startQuiz('medium')">Intermediate</button>
+    <button onclick="startQuiz('hard')">Hard</button>
+  </div>
+  <div id="quiz-container">
+    <div class="timer">Time Left: <span id="timer">100</span>s</div>
+    <div class="question" id="question"></div>
+    <div class="options" id="options"></div>
+  </div>
+  <div id="popup">
+    <h2>🎉 Quiz Completed! 🎉</h2>
+    <button onclick="showScore()">Check Score</button>
+    <div id="score-result"></div>
+    <button onclick="goHome()">🏠 Home Page</button>
+  </div>
+  <audio id="correctSound" src="https://www.soundjay.com/buttons/sounds/button-4.mp3"></audio>
+  <audio id="wrongSound" src="https://www.soundjay.com/buttons/sounds/button-10.mp3"></audio>
+  <script>
+    const questions = {
+      easy: [
+        { q: 'What color is SpongeBob SquarePants?', a: 'Yellow', options: ['Pink', 'Blue', 'Yellow', 'Green'] },
+        { q: 'What kind of animal is Tom in Tom and Jerry?', a: 'Cat', options: ['Dog', 'Mouse', 'Cat', 'Bird'] },
+        { q: 'What is the name of Chhota Bheem\'s best friend?', a: 'Chutki', options: ['Kalia', 'Raju', 'Chutki', 'Jaggu'] },
+{ q: 'What does Doraemon take out from his pocket?', a: 'Gadgets', options: ['Coins', 'Chocolates', 'Gadgets', 'Food'] },
+  { q: 'Who is Shinchan\'s pet dog?', a: 'Shiro', options: ['Piko', 'Shiro', 'Milo', 'Toto'] },
+  { q: 'Which Pokémon is yellow and uses electricity?', a: 'Pikachu', options: ['Charmander', 'Pikachu', 'Bulbasaur', 'Squirtle'] },
+  { q: 'What is Motu\'s favorite food?', a: 'Samosa', options: ['Ladoo', 'Pizza', 'Samosa', 'Chole'] },
+  { q: 'In Roll No 21, who is the main villain?', a: 'Principal Kanishk', options: ['Krishna', 'Sunny', 'Principal Kanishk', 'Guruji'] },
+  { q: 'What are Oggy\'s enemies?', a: 'Cockroaches', options: ['Mice', 'Cats', 'Cockroaches', 'Dogs'] },
+  { q: 'What is Bunty to Chikoo?', a: 'Brother', options: ['Uncle', 'Cousin', 'Brother', 'Friend'] },
+  { q: 'In Selfie with Bajrangi, who is always in trouble?', a: 'Ankush', options: ['Raju', 'Ankush', 'Shiva', 'Rohan'] },
+  { q: 'What is Shinchan\'s favorite food?', a: 'Chocobi', options: ['Chocobi', 'Ice Cream', 'Pizza', 'Shimla Mirchi'] },
+  { q: 'What color is Pikachu?', a: 'Yellow', options: ['Red', 'Blue', 'Green', 'Yellow'] },
+  { q: 'Who is the blue robot cat from the future?', a: 'Doraemon', options: ['Nobita', 'Shizuka', 'Gian', 'Doraemon'] },
+  { q: 'What is Bheem\'s favorite sweet?', a: 'Ladoo', options: ['Halwa', 'Barfi', 'Ladoo', 'Jalebi'] },
+  { q: 'Who always tries to defeat Chhota Bheem?', a: 'Kalia', options: ['Raju', 'Jaggu', 'Kalia', 'Indumati'] },
+  { q: 'What animal is Shinchan\'s pet?', a: 'Dog', options: ['Cat', 'Dog', 'Mouse', 'Parrot'] },
+  { q: 'What color is Doraemon?', a: 'Blue', options: ['Blue', 'Green', 'Yellow', 'White'] },
+  { q: 'Who helps Ankush in Selfie with Bajrangi?', a: 'Bajrangi', options: ['Guru', 'Appa', 'Bajrangi', 'Sunny'] },
+  { q: 'Who is the strongest in Motlu Patlu?', a: 'Motu', options: ['John', 'Ghasitaram', 'Motu', 'Patlu'] },
+  { q: 'In Oggy, how many cockroaches are there?', a: '3', options: ['2', '3', '4', '5'] },
+  { q: 'Which anime has characters like Ash and Pikachu?', a: 'Pokémon', options: ['Digimon', 'Pokémon', 'Beyblade', 'Doraemon'] },
+        { q: 'What kind of animal is Scooby-Doo?', a: 'Dog', options: ['Cat', 'Dog', 'Bear', 'Fish'] },
+        { q: 'Which mouse is always running from Tom?', a: 'Jerry', options: ['Stuart', 'Mickey', 'Jerry', 'Speedy'] },
+        { q: 'Which blue tank engine has the number 1?', a: 'Thomas', options: ['James', 'Percy', 'Thomas', 'Henry'] }
+    ],
+      medium: [
+      
+        { q: 'What is Ben 10’s full name?', a: 'Ben Tennyson', options: ['Ben Terror', 'Ben Tenfold', 'Ben Tennyson', 'Ben Taylor'] },
+        
+  { q: 'What is Kris roll number in Roll No 21?', a: '21', options: ['18', '11', '21', '9'] },
+  { q: 'Who is Chhota Bheem’s rival and sometimes friend?', a: 'Kalia', options: ['Jaggu', 'Raju', 'Kalia', 'Indumati'] },
+  { q: 'What kind of animal is Jaggu in Chhota Bheem?', a: 'Monkey', options: ['Bear', 'Elephant', 'Monkey', 'Dog'] },
+  { q: 'Which gadget helps Doraemon to fly?', a: 'Bamboo Copter', options: ['Anywhere Door', 'Time Machine', 'Bamboo Copter', 'Magic Watch'] },
+  { q: 'Who is Shizuka\'s best friend?', a: 'Dekisugi', options: ['Nobita', 'Suneo', 'Dekisugi', 'Gian'] },
+  { q: 'Who is the main villain in Selfie with Bajrangi?', a: 'Totaram', options: ['Sotaram', 'Totaram', 'Ranga', 'Keshav'] },
+  { q: 'What color is Shinchan’s school uniform?', a: 'White', options: ['Blue', 'Red', 'Green', 'White'] },
+  { q: 'Which Pokémon evolves into Rillaboom?', a: 'Grookey', options: ['Grookey', 'Sobble', 'Scorbunny', 'Meowth'] },
+  { q: 'Who is Oggy\'s cousin?', a: 'Jack', options: ['Bob', 'Jack', 'Kevin', 'Jerry'] },
+  { q: 'What is Titoo always known for?', a: 'Masti', options: ['Bad Luck', 'Masti', 'Dancing', 'Fighting'] },
+  { q: 'What is the name of the blue Beyblade in Season 1?', a: 'Valtryek', options: ['Spryzen', 'Roktavor', 'Valtryek', 'Genesis'] },
+  { q: 'Who is Krishna in disguise in Roll No 21?', a: 'Kris', options: ['Kris', 'Raj', 'Sunny', 'Lucky'] },
+  { q: 'Who often tries to bully Nobita?', a: 'Gian', options: ['Shizuka', 'Suneo', 'Gian', 'Dekisugi'] },
+  { q: 'Which cockroach wears green in Oggy and the Cockroaches?', a: 'Marky', options: ['Joey', 'Marky', 'Dee Dee', 'Tom'] },
+  { q: 'Who is the brainy one in Motlu Patlu?', a: 'Patlu', options: ['Motlu', 'John', 'Patlu', 'Dr. Jhatka'] },
+  { q: 'What is the name of Beyblade character with red hair?', a: 'Valt Aoi', options: ['Shu Kurenai', 'Valt Aoi', 'Free De La Hoya', 'Rantaro'] },
+  { q: 'Who is Bunty’s teacher?', a: 'Miss Malti', options: ['Miss Malti', 'Miss Sona', 'Miss Pinky', 'Miss Lily'] },
+  { q: 'What is the name of Shinchan’s teacher?', a: 'Yoshinaga', options: ['Yoshinaga', 'Maruko', 'Mizuki', 'Akari'] },
+  { q: 'What is Doraemon scared of?', a: 'Mice', options: ['Mice', 'Ghosts', 'Water', 'Dark'] },
+  { q: 'Who is the fastest in Ninja Hattori?', a: 'Hattori', options: ['Shinzo', 'Hattori', 'Kenny', 'Amara'] },
+  { q: 'Who is the best friend of Kris?', a:'Bablu', options: ['Madhu','Bablu','Pinky','Golu']},
+  { q: 'Who tries to bully Madhu everytime in Roll No. 21?', a:'Golu', options:['Kris','Kanishk','Dr. J','Golu']}
+
+      ],
+      hard: [
+        { q: 'In Pokemon, who was Ash very first Pokémon to be caught?', a: 'Caterpie', options: ['Caterpie', 'Charmander', 'Pikachu', 'Squirtle'] },
+        
+  { q: 'What is Nobita’s last name?', a: 'Nobi', options: ['Tamako', 'Nobi', 'Dekisugi', 'Yamada'] },
+  { q: 'Who is the user of Valtryek in Beyblade Burst?', a: 'Valt Aoi', options: ['Shu', 'Free', 'Valt Aoi', 'Dante'] },
+  { q: 'What is the passion of Bunty?', a: 'Music', options: ['Music', 'Cricket', 'Dance', 'Eating'] },
+  { q: 'What special power does Bajrangi use?', a: 'Powerful Astra', options: ['Flying', 'Teleport', 'Powerful Astra', 'Invisible'] },
+  { q: 'In Pokémon, what type is Charizard?', a: 'Fire/Flying', options: ['Fire', 'Dragon', 'Fire/Flying', 'Flying/Dragon'] },
+  { q: 'Who is the small brother of Ninja Hattori?', a: 'Shinzo', options: ['Kage', 'Shinzo', 'Kemumaki', 'Kiyo'] },
+  { q: 'What is the name of Doraemon\'s sister?', a: 'Dorami', options: ['Shizuka', 'Dorami', 'Tama', 'Mimi'] },
+  { q: 'What is the hometown of Ash Ketchum?', a: 'Pallet Town', options: ['Viridian', 'Pallet Town', 'Cerulean', 'Lavender'] },
+  { q: 'Which cockroach eats the most in Oggy?', a: 'Dee Dee', options: ['Joey', 'Marky', 'Dee Dee', 'Bob'] },
+  { q: 'What was Krishna’s magical weapon in Roll No 21?', a: 'Peacock Feather', options: ['Whistle', 'Belt', 'Peacock Feather', 'Watch'] },
+  { q: 'What is the name of Titoo’s school?', a: 'Modern Public School', options: ['Star School', 'Happy Kids', 'Modern Public School', 'New Era School'] },
+  { q: 'What is the full name of Doraemon’s owner?', a: 'Nobita Nobi', options: ['Nobi Nobita', 'Tamako Nobi', 'Nobita Nobi', 'Dekisugi Nobita'] },
+  { q: 'Who is the strongest blader in Beyblade Burst Season 2?', a: 'Shu Kurenai', options: ['Valt Aoi', 'Shu Kurenai', 'Free De La Hoya', 'Rantaro'] },
+  { q: 'What does Ankush always do at last of episodes?', a: 'Selfies', options: ['Ladoos', 'Selfies', 'Books', 'Food'] },
+  { q: 'Who sings bad songs in Doraemon?', a: 'Gian', options: ['Suneo', 'Gian', 'Nobita', 'Dekisugi'] },
+  { q: 'Who runs behind Motlu Patlu for crimes?', a: 'Inspector Chingam', options: ['Dr. Jhatka', 'Ghasitaram', 'John', 'Inspector Chingam'] },
+  { q: 'What is the name of Shinchan’s favorite superhero?', a: 'Action Kamen', options: ['Captain Mask', 'Power Ranger', 'Action Kamen', 'Hero Man'] },
+  { q: 'What does Krishna use to defeat demons?', a: 'Flute Music', options: ['Sword', 'Flute Music', 'Laser', 'Kick'] },
+  { q: 'Which gadget in Doraemon allows time travel?', a: 'Time Machine', options: ['Anywhere Door', 'Time Watch', 'Time Machine', 'Teleport Pad'] },
+  { q: 'What is Name of Titoo Society?', a: 'LuckyHome', options: ['Gokuldham','Furfurinagar','LuckyHome','SheraHome']}
+]
+
+      
+    };
+
+    let currentLevel = '';
+    let quizQuestions = [];
+    let currentQuestionIndex = 0;
+    let score = 0;
+    let timer;
+    let timeLeft = 100;
+
+    function startQuiz(level) {
+      currentLevel = level;
+      quizQuestions = [...questions[level]].sort(() => 0.5 - Math.random()).slice(0, 10);
+      document.querySelector('.level-buttons').style.display = 'none';
+      document.getElementById('quiz-container').style.display = 'block';
+      nextQuestion();
+      startTimer();
+    }
+
+    function startTimer() {
+      timer = setInterval(() => {
+        timeLeft--;
+        document.getElementById('timer').textContent = timeLeft;
+        if (timeLeft === 0) endQuiz();
+      }, 1000);
+    }
+
+    function nextQuestion() {
+      if (currentQuestionIndex >= quizQuestions.length) return endQuiz();
+      const qData = quizQuestions[currentQuestionIndex];
+      document.getElementById('question').textContent = qData.q;
+      const optionsContainer = document.getElementById('options');
+      optionsContainer.innerHTML = '';
+      qData.options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.textContent = opt;
+        btn.onclick = () => checkAnswer(opt);
+        optionsContainer.appendChild(btn);
+      });
+    }
+
+    function checkAnswer(selected) {
+      const qData = quizQuestions[currentQuestionIndex];
+      const buttons = document.querySelectorAll('#options button');
+      buttons.forEach(btn => btn.disabled = true);
+      if (selected === qData.a) {
+        score++;
+        event.target.classList.add('correct');
+        document.getElementById('correctSound').play();
+      } else {
+        event.target.classList.add('wrong');
+        document.getElementById('wrongSound').play();
+      }
+      setTimeout(() => {
+        currentQuestionIndex++;
+        nextQuestion();
+      }, 1000);
+    }
+
+    function endQuiz() {
+      clearInterval(timer);
+      document.getElementById('quiz-container').style.display = 'none';
+      document.getElementById('popup').style.display = 'block';
+    }
+
+    function showScore() {
+      let remark = '';
+      if (score <= 2) remark = 'You are an Amateur';
+      else if (score <= 5) remark = 'You are a Beginner';
+      else if (score <= 8) remark = 'You are a Toon Lover';
+      else remark = 'You are a Die-Hard Fan';
+      document.getElementById('score-result').innerHTML = `<p>Your Score: ${score}/10</p><p>${remark}</p>`;
+    }
+
+    function goHome() {
+      location.reload();
+    }
+  </script>
+</body>
+</html>
